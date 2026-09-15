@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hygienist 90-Day Review — Smile Haus</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --onyx: #2A2E31; --alabaster: #F2EFE8; --sandstone: #D6CDBD;
+  --taupe: #C2B09E; --earth: #877765; --white: #FFFFFF; --radius: 6px;
+  --font-head: 'Cormorant Garamond', serif; --font-body: 'Jost', sans-serif;
+}
+body { font-family: var(--font-body); background: var(--alabaster); color: var(--onyx); font-size: 15px; line-height: 1.5; }
+
+.site-header { background: var(--onyx); padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.site-header img { height: 36px; flex-shrink: 0; }
+.site-header h1 { font-family: var(--font-head); color: var(--white); font-weight: 300; font-size: 22px; letter-spacing: 0.04em; flex: 1; text-align: center; }
+.settings-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: var(--white); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; font-family: var(--font-body); font-size: 13px; white-space: nowrap; }
+.settings-btn:hover { border-color: rgba(255,255,255,0.7); }
+.reset-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; font-family: var(--font-body); font-size: 13px; white-space: nowrap; transition: all 0.15s; }
+.reset-btn:hover { border-color: #ff8a80; color: #ff8a80; }
+.edit-lock-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: var(--white); border-radius: var(--radius); padding: 6px 14px; cursor: pointer; font-family: var(--font-body); font-size: 13px; white-space: nowrap; transition: all 0.15s; }
+.edit-lock-btn:hover { border-color: rgba(255,255,255,0.7); }
+.edit-lock-btn.locked { border-color: rgba(255,200,100,0.5); color: #ffd580; }
+body.form-locked input, body.form-locked select, body.form-locked textarea { opacity: 0.7; pointer-events: none; background: #f5f3ef; }
+body.form-locked .skill-btn, body.form-locked .score-btn, body.form-locked .pass-all-btn, body.form-locked .fail-all-btn, body.form-locked .tier-expand-btn, body.form-locked #submitBtn { pointer-events: none; opacity: 0.55; }
+.pin-error { color: #c0392b; font-size: 13px; margin-top: 6px; display: none; }
+
+.main { max-width: 960px; margin: 0 auto; padding: 28px 24px 80px; }
+
+.card { background: var(--white); border: 1px solid var(--sandstone); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
+.card-header { background: var(--onyx); color: var(--white); padding: 11px 20px; display: flex; align-items: center; justify-content: space-between; }
+.card-header h2 { font-family: var(--font-head); font-weight: 300; font-size: 18px; letter-spacing: 0.03em; }
+.card-header .pts { font-size: 12px; opacity: 0.55; }
+.card-body { padding: 20px; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+label.field-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--earth); margin-bottom: 4px; }
+input[type=text], input[type=date], input[type=number], select, textarea {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--sandstone); border-radius: var(--radius);
+  font-family: var(--font-body); font-size: 14px; background: var(--white); color: var(--onyx);
+}
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--earth); border-color: transparent; }
+
+.scale-bar { background: var(--white); border: 1px solid var(--sandstone); border-radius: var(--radius); padding: 8px 16px; font-size: 12px; text-align: center; color: var(--earth); margin-bottom: 18px; }
+.scale-bar b { color: var(--onyx); }
+
+.kpi-table, .perf-table { width: 100%; border-collapse: collapse; }
+.kpi-table th, .perf-table th { background: var(--earth); color: var(--white); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 9px 14px; text-align: left; }
+.kpi-table th.c, .perf-table th.c { text-align: center; }
+.kpi-table td, .perf-table td { padding: 9px 14px; border-bottom: 1px solid var(--sandstone); vertical-align: middle; }
+.kpi-table tr:last-child td, .perf-table tr:last-child td { border-bottom: none; }
+.kpi-table tr:nth-child(even) td, .perf-table tr:nth-child(even) td { background: var(--alabaster); }
+.kpi-name, .crit-name { font-size: 14px; font-weight: 500; }
+.kpi-sub, .crit-desc { font-size: 12px; color: #5a4a3c; margin-top: 2px; }
+.kpi-target-input { border: none; background: transparent; font-family: var(--font-body); font-size: 13px; color: #5a4a3c; text-align: center; width: 100%; padding: 0; cursor: default; }
+[contenteditable="true"] { outline: none; border-bottom: 1px dashed var(--sandstone); border-radius: 2px; cursor: text; background: #fffdf9; padding: 0 2px; }
+[contenteditable="true"]:focus { background: #fff8ee; border-bottom-color: var(--earth); }
+[data-editable] { cursor: text; border-radius: 3px; min-width: 20px; display: inline-block; padding: 0 2px; transition: background 0.1s; }
+[data-editable]:hover { background: #fffdf9; outline: 1px dashed var(--sandstone); outline-offset: 1px; }
+[data-editable]:focus { background: #fff8ee !important; outline: 2px solid var(--earth) !important; outline-offset: 1px; }
+
+.score-group { display: flex; gap: 4px; justify-content: center; }
+.score-btn {
+  width: 34px; height: 34px; border: 1.5px solid var(--sandstone); background: var(--white);
+  border-radius: 50%; cursor: pointer; font-family: var(--font-body); font-size: 14px; font-weight: 500;
+  color: var(--onyx); transition: all 0.12s; display: flex; align-items: center; justify-content: center;
+}
+.score-btn:hover { border-color: var(--earth); color: var(--earth); }
+.score-btn.active { background: var(--earth); border-color: var(--earth); color: var(--white); }
+
+.subtotal-row { text-align: right; padding: 8px 14px; font-size: 13px; color: var(--earth); font-weight: 600; border-top: 1px solid var(--sandstone); background: var(--alabaster); }
+.section-notes { padding: 12px 14px 14px; border-top: 1px solid #f0ece4; }
+.section-notes .field-label { margin-bottom: 6px; }
+
+.narrative-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.narrative-field { display: flex; flex-direction: column; }
+.narrative-field textarea { flex: 1; min-height: 100px; }
+.narrative-full { grid-column: 1 / -1; }
+
+.tier-accordion { border: 1px solid var(--sandstone); border-radius: var(--radius); overflow: hidden; margin-bottom: 0; }
+.tier-row { border-bottom: 1px solid var(--sandstone); }
+.tier-row:last-child { border-bottom: none; }
+.tier-header { display: flex; align-items: center; padding: 10px 16px; gap: 8px; width: 100%; box-sizing: border-box; }
+.tier-header.current-tier { background: #f0ede6; }
+.tier-header.next-tier { background: #f7f4ef; }
+.tier-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.tier-header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tier-badge { font-size: 11px; font-weight: 700; background: var(--sandstone); color: var(--onyx); border-radius: 4px; padding: 2px 7px; letter-spacing: 0.04em; }
+.tier-badge.current { background: var(--earth); color: var(--white); }
+.tier-badge.next { background: #b8a890; color: var(--white); }
+.tier-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tier-rate { font-size: 12px; color: var(--taupe); white-space: nowrap; }
+.tier-gate-status { font-size: 11px; font-weight: 600; border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
+.tier-gate-status.gate-pass { background: #d4edda; color: #2d6a3f; }
+.tier-gate-status.gate-fail { background: #fde8e8; color: #c0392b; }
+.tier-body { display: none; border-top: 1px solid var(--sandstone); }
+.tier-body.open { display: block; }
+.skill-row { display: flex; align-items: center; padding: 8px 16px; border-bottom: 1px solid #f0ece4; gap: 10px; }
+.skill-row:last-of-type { border-bottom: none; }
+.skill-name { flex: 1; font-size: 13px; color: var(--onyx); border-bottom: 1px dashed transparent; padding: 0 2px; }
+.skill-btns { display: flex; gap: 5px; flex-shrink: 0; }
+.skill-btn { width: 30px; height: 28px; border: 1.5px solid var(--sandstone); background: var(--white); border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.12s; display: flex; align-items: center; justify-content: center; color: var(--onyx); }
+.skill-btn:hover { border-color: var(--earth); }
+.skill-btn[id$="_can"].active { background: #2d6a3f; border-color: #2d6a3f; color: #fff; }
+.skill-btn[id$="_cannot"].active { background: #c0392b; border-color: #c0392b; color: #fff; }
+.skill-delete-btn { width: 24px; height: 24px; background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0.4; flex-shrink: 0; padding: 0; line-height: 1; }
+.skill-delete-btn:hover { opacity: 0.9; }
+.pass-all-btn, .fail-all-btn { font-family: var(--font-body); font-size: 11px; font-weight: 600; border-radius: 4px; padding: 3px 8px; cursor: pointer; white-space: nowrap; border: 1.5px solid; transition: all 0.12s; }
+.pass-all-btn { background: #eaf4ed; border-color: #9fc9ab; color: #2d6a3f; }
+.pass-all-btn.all-passed { background: #2d6a3f; border-color: #2d6a3f; color: #fff; }
+.fail-all-btn { background: #fdf0f0; border-color: #e9b0b0; color: #c0392b; }
+.tier-expand-btn { width: 28px; height: 28px; background: none; border: 1.5px solid var(--sandstone); border-radius: 4px; cursor: pointer; font-size: 16px; color: var(--taupe); transition: transform 0.2s; display: flex; align-items: center; justify-content: center; }
+.tier-expand-btn.open { transform: rotate(90deg); }
+.add-skill-row { padding: 6px 12px 10px; }
+.add-skill-btn { background: none; border: 1px dashed var(--sandstone); color: var(--earth); border-radius: 4px; padding: 4px 12px; cursor: pointer; font-family: var(--font-body); font-size: 12px; }
+.add-skill-btn:hover { border-color: var(--earth); }
+
+.gate-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.gate-box { border-radius: var(--radius); padding: 14px 16px; border: 1.5px solid; }
+.gate-box.incomplete { border-color: var(--sandstone); background: #faf8f4; }
+.gate-box.pass { border-color: #9fc9ab; background: #eaf4ed; }
+.gate-box.fail { border-color: #e9b0b0; background: #fdf0f0; }
+.gate-box-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--earth); margin-bottom: 4px; }
+.gate-box-status { font-size: 15px; font-weight: 600; }
+.gate-box.pass .gate-box-status { color: #2d6a3f; }
+.gate-box.fail .gate-box-status { color: #c0392b; }
+.gate-box.incomplete .gate-box-status { color: var(--taupe); }
+.gate-box-sub { font-size: 12px; color: var(--earth); margin-top: 2px; }
+
+.score-summary-card { background: var(--onyx); color: var(--white); border-radius: var(--radius); padding: 20px 28px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: center; }
+.sum-block { text-align: center; }
+.sum-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; opacity: 0.55; margin-bottom: 4px; }
+.sum-value { font-family: var(--font-head); font-size: 32px; font-weight: 300; }
+.sum-value.highlight { color: #f5d27a; }
+.band-block { text-align: center; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 20px; }
+.band-name { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+.band-score { font-family: var(--font-head); font-size: 38px; font-weight: 300; }
+.band-sub { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+.band-pip { background: #f5d7d7; color: #8b1c1c; }
+.band-coaching { background: #fde9c9; color: #7a4500; }
+.band-meets { background: #d4edda; color: #1e4d30; }
+.band-exceeds { background: #c9e3f5; color: #1a3f5c; }
+.band-outstanding { background: #e8d5f7; color: #4a1e6e; }
+
+.recommendation-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rec-option { border: 1.5px solid var(--sandstone); border-radius: var(--radius); padding: 12px 14px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; transition: border-color 0.15s; }
+.rec-option:hover { border-color: var(--earth); }
+.rec-option.selected { border-color: var(--earth); background: #faf5ee; }
+.rec-option input[type=radio] { accent-color: var(--earth); margin-top: 3px; flex-shrink: 0; }
+.rec-option-label { font-size: 14px; font-weight: 600; }
+.rec-option-desc { font-size: 12px; color: var(--earth); margin-top: 2px; }
+
+.submit-section { background: var(--white); border: 1px solid var(--sandstone); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+.submit-section h2 { font-family: var(--font-head); font-weight: 300; font-size: 20px; letter-spacing: 0.03em; margin-bottom: 18px; }
+.section-divider { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--earth); border-bottom: 1px solid var(--sandstone); padding-bottom: 6px; margin: 16px 0 12px; }
+.sig-block { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 4px; }
+.submit-btn { display: block; width: 100%; padding: 14px; background: var(--earth); color: var(--white); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 15px; font-weight: 600; cursor: pointer; letter-spacing: 0.04em; transition: background 0.15s; margin-top: 8px; }
+.submit-btn:hover { background: #6b5e50; }
+.preview-pdf-btn { font-family: var(--font-body); font-size: 13px; font-weight: 500; background: var(--white); border: 1.5px solid var(--sandstone); border-radius: var(--radius); padding: 7px 14px; cursor: pointer; color: var(--onyx); transition: all 0.12s; }
+.preview-pdf-btn:hover { border-color: var(--earth); color: var(--earth); }
+
+.site-footer { background: var(--onyx); color: rgba(255,255,255,0.45); padding: 14px 40px; font-size: 12px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.site-footer img { height: 20px; opacity: 0.5; }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(30,25,20,0.55); z-index: 1000; display: flex; align-items: center; justify-content: center; display: none; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 10px; padding: 28px; max-width: 480px; width: calc(100% - 40px); box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+.modal h3 { font-family: var(--font-head); font-weight: 400; font-size: 20px; margin-bottom: 14px; }
+.modal-hint { font-size: 13px; color: var(--earth); margin-bottom: 16px; }
+.modal-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--earth); margin: 14px 0 6px; }
+.modal-field { margin-bottom: 12px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+.btn-save { font-family: var(--font-body); font-size: 13px; font-weight: 600; background: var(--earth); color: var(--white); border: none; border-radius: var(--radius); padding: 8px 20px; cursor: pointer; }
+.btn-cancel { font-family: var(--font-body); font-size: 13px; font-weight: 500; background: var(--white); color: var(--onyx); border: 1.5px solid var(--sandstone); border-radius: var(--radius); padding: 8px 20px; cursor: pointer; }
+
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--onyx); color: var(--white); padding: 10px 22px; border-radius: 24px; font-size: 14px; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 600px) {
+  .site-header { padding: 14px 16px; flex-wrap: wrap; gap: 8px; }
+  .site-header h1 { font-size: 17px; order: -1; flex-basis: 100%; text-align: left; }
+  .main { padding: 16px 12px 60px; }
+  .info-grid, .narrative-grid, .recommendation-options, .gate-summary, .sig-block { grid-template-columns: 1fr; }
+  .score-summary-card { grid-template-columns: 1fr 1fr; }
+  .band-block { border-left: none; padding-left: 0; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px; grid-column: 1 / -1; }
+}
+
+@media print {
+  .site-header button, .submit-section button, .pass-all-btn, .fail-all-btn, .skill-delete-btn, .add-skill-btn, .tier-expand-btn { display: none !important; }
+  .tier-body { display: block !important; }
+  .modal-overlay { display: none !important; }
+}
+</style>
+</head>
+<body class="form-locked">
+
+<header class="site-header">
+  <img src="../da-review-form/logo-white.png" alt="Smile Haus" onerror="this.style.display='none'">
+  <h1>Hygienist 90-Day Review</h1>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button class="edit-lock-btn locked" id="editLockBtn" onclick="openPinModal()">&#128274; Edit</button>
+    <button class="reset-btn" onclick="openResetModal()">&#10006; Reset</button>
+    <button class="settings-btn" onclick="openSettings()">&#9881;</button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- Employee Info -->
+  <div class="card">
+    <div class="card-header"><h2>Employee Information</h2></div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div><label class="field-label">Hygienist Name</label><input type="text" id="hygName" placeholder="Full name"></div>
+        <div>
+          <label class="field-label">Home Office</label>
+          <select id="homeOffice">
+            <option value="">— Select office —</option>
+            <option>Georgetown</option><option>On the Square</option><option>Austin</option>
+            <option>Implant Center</option><option>Medical Parkway</option><option>Arboretum</option>
+            <option>Pflugerville</option><option>South Austin</option>
+            <option>New Braunfels Dental Arts</option><option>Anderson Mill</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Current Hourly Rate ($) <span id="tierAutoLabel" style="font-size:10px;font-weight:400;color:var(--taupe);text-transform:none;letter-spacing:0;margin-left:4px;"></span></label>
+          <input type="number" id="currentRate" placeholder="e.g. 50.00" step="0.25" min="40" max="75" oninput="onRateChange()">
+        </div>
+        <div>
+          <label class="field-label">Current Tier</label>
+          <select id="currentTier" onchange="onTierChange()">
+            <option value="">— Select tier —</option>
+          </select>
+        </div>
+        <div><label class="field-label">Hire Date</label><input type="date" id="hireDate"></div>
+        <div><label class="field-label">Review Date</label><input type="date" id="reviewDate"></div>
+        <div><label class="field-label">Reviewer (OM Name)</label><input type="text" id="reviewerName" placeholder="Office Manager name"></div>
+        <div><label class="field-label">Review Period</label><input type="text" id="reviewPeriod" placeholder="e.g. First 90 days (Jan – Mar 2025)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating scale -->
+  <div class="scale-bar">
+    <b>Rating Scale</b> &nbsp;·&nbsp; <b>1</b> Does Not Meet &nbsp;·&nbsp; <b>2</b> Partially Meets &nbsp;·&nbsp; <b>3</b> Meets Expectations &nbsp;·&nbsp; <b>4</b> Exceeds &nbsp;·&nbsp; <b>5</b> Outstanding
+  </div>
+
+  <!-- Part I: KPIs -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Part I — KPI Performance</h2>
+      <span class="pts" id="p1Header">/ 25 pts</span>
+    </div>
+    <div style="padding:0">
+      <table class="kpi-table">
+        <thead><tr>
+          <th style="width:48%">KPI</th>
+          <th style="width:18%;text-align:center">Target</th>
+          <th style="width:34%;text-align:center">Score (1–5)</th>
+        </tr></thead>
+        <tbody id="kpiBody"></tbody>
+      </table>
+      <div class="subtotal-row">Part I Total: <span id="kpiSubtotal">0</span> / <span id="kpiDenom">25</span></div>
+      <div class="section-notes">
+        <label class="field-label">KPI Notes — Data Sources, Context, Exceptions</label>
+        <textarea id="kpiNotes" placeholder="Pull actuals from Oryx KPI Dashboard. Note production averages, reappointment %, perio %, scan counts. Note any extenuating circumstances."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Part II: 90-Day Performance Evaluation -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Part II — 90-Day Performance Evaluation</h2>
+      <span class="pts">/ 30 pts (6 categories × 5)</span>
+    </div>
+    <div style="padding:0">
+      <table class="perf-table">
+        <thead><tr>
+          <th style="width:62%">Category</th>
+          <th class="c" style="width:38%">Score (1–5)</th>
+        </tr></thead>
+        <tbody id="perfBody"></tbody>
+      </table>
+      <div class="subtotal-row">Part II Total: <span id="p2Subtotal">0</span> / 30</div>
+      <div class="section-notes">
+        <label class="field-label">Performance Notes</label>
+        <textarea id="perfNotes" placeholder="Specific observations, strengths observed, areas that need attention during the first 90 days…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score Summary -->
+  <div class="score-summary-card">
+    <div class="sum-block">
+      <div class="sum-label">Part I — KPIs</div>
+      <div class="sum-value"><span id="sumP1">0</span><span style="font-size:12px;opacity:0.4"> / <span id="sumP1Max">25</span></span></div>
+    </div>
+    <div class="sum-block">
+      <div class="sum-label">Part II — Performance</div>
+      <div class="sum-value"><span id="sumP2">0</span><span style="font-size:12px;opacity:0.4"> / 30</span></div>
+    </div>
+    <div class="sum-block">
+      <div class="sum-label">Combined Score</div>
+      <div class="sum-value highlight"><span id="sumTotal">0</span><span style="font-size:12px;opacity:0.4"> / <span id="sumTotalMax">55</span></span></div>
+    </div>
+    <div class="band-block">
+      <div class="band-name" id="bandName" style="opacity:0.35;">Fill in scores above</div>
+      <div class="band-score" id="bandScore">—</div>
+      <div class="band-sub">out of 55 points</div>
+    </div>
+  </div>
+
+  <!-- Feedback & Development -->
+  <div class="card">
+    <div class="card-header"><h2>Feedback &amp; Development</h2></div>
+    <div class="card-body">
+      <div class="narrative-grid">
+        <div class="narrative-field">
+          <label class="field-label">Strengths Observed</label>
+          <textarea id="strengths" placeholder="What has this hygienist done exceptionally well in their first 90 days? Be specific."></textarea>
+        </div>
+        <div class="narrative-field">
+          <label class="field-label">Areas for Improvement</label>
+          <textarea id="growthAreas" placeholder="Where does this hygienist need to develop? Be constructive and specific."></textarea>
+        </div>
+        <div class="narrative-field narrative-full">
+          <label class="field-label">90-Day Goals &amp; Action Plan</label>
+          <textarea id="goals" placeholder="List 2–4 specific, measurable goals for the next phase of their development."></textarea>
+        </div>
+        <div class="narrative-field narrative-full">
+          <label class="field-label">Employee Response / Comments</label>
+          <textarea id="employeeComments" placeholder="Space for the hygienist to add their own perspective, reactions, or acknowledgment after the review meeting."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tier Competency Checklist -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Tier Competency Checklist</h2>
+      <span class="pts">Gate A · Gate B</span>
+    </div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--taupe);margin-bottom:14px;">
+        Mark each skill: <strong style="color:#2d6a3f">✓ Can do</strong> or <strong style="color:#c0392b">✗ Cannot do</strong>.
+        Leave blank if not yet evaluated. <strong>Gate A</strong> = all skills at current tier and below are ✓.
+        <strong>Gate B</strong> = all skills at next tier are also ✓ (required to promote).
+      </p>
+      <div class="tier-accordion" id="tierAccordion"></div>
+      <div class="gate-summary" id="gateSummary">
+        <div class="gate-box incomplete" id="gateABox">
+          <div class="gate-box-label">Gate A — Current Tier Mastery</div>
+          <div class="gate-box-status" id="gateAStatus">Select your tier above</div>
+          <div class="gate-box-sub" id="gateASub">Required for advancement</div>
+        </div>
+        <div class="gate-box incomplete" id="gateBBox">
+          <div class="gate-box-label">Gate B — Next Tier Mastery</div>
+          <div class="gate-box-status" id="gateBStatus">Select your tier above</div>
+          <div class="gate-box-sub" id="gateBSub">Required for promotion</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overall Assessment & Recommendation -->
+  <div class="card">
+    <div class="card-header"><h2>Overall Assessment &amp; Recommendation</h2></div>
+    <div class="card-body">
+      <div style="margin-bottom:18px;">
+        <label class="field-label" style="margin-bottom:10px;">Recommendation</label>
+        <div class="recommendation-options" id="recommendationOptions">
+          <label class="rec-option" onclick="selectRec(this,'continue')">
+            <input type="radio" name="recommendation" value="continue">
+            <div>
+              <div class="rec-option-label">Continue as Planned</div>
+              <div class="rec-option-desc">Employee is meeting expectations. Continue standard onboarding and development path.</div>
+            </div>
+          </label>
+          <label class="rec-option" onclick="selectRec(this,'extend')">
+            <input type="radio" name="recommendation" value="extend">
+            <div>
+              <div class="rec-option-label">Extend Probationary Period</div>
+              <div class="rec-option-desc">Additional time and coaching needed before full confirmation. Set clear milestones.</div>
+            </div>
+          </label>
+          <label class="rec-option" onclick="selectRec(this,'raise')">
+            <input type="radio" name="recommendation" value="raise">
+            <div>
+              <div class="rec-option-label">Recommend Rate Adjustment</div>
+              <div class="rec-option-desc">Employee has exceeded 90-day expectations. Rate adjustment recommended — process through standard approval.</div>
+            </div>
+          </label>
+          <label class="rec-option" onclick="selectRec(this,'release')">
+            <input type="radio" name="recommendation" value="release">
+            <div>
+              <div class="rec-option-label">Release / Separation</div>
+              <div class="rec-option-desc">Employee is not meeting minimum expectations. Coordinate with HR before proceeding.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label class="field-label">
+          <input type="checkbox" id="advancementCheck" style="width:auto;margin-right:6px;accent-color:var(--earth);">
+          I certify this employee is ready to advance to the next tier
+        </label>
+        <p style="font-size:12px;color:var(--taupe);margin-top:4px;">Check only if Gate B is passed and advancement is agreed upon.</p>
+      </div>
+      <div>
+        <label class="field-label">Overall Comments</label>
+        <textarea id="overallComments" rows="4" placeholder="Summarize the hygienist's first 90 days. Highlight key wins, outstanding concerns, and the path forward."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signatures & Submission -->
+  <div class="submit-section">
+    <h2>Signatures &amp; Submission</h2>
+
+    <div class="section-divider">Employee</div>
+    <div class="sig-block">
+      <div>
+        <label class="field-label">Employee Signature (typed name)</label>
+        <input type="text" id="employeeSig" placeholder="Hygienist types their full name to acknowledge this review">
+      </div>
+      <div>
+        <label class="field-label">Date</label>
+        <input type="date" id="employeeSigDate">
+      </div>
+    </div>
+
+    <div class="section-divider">Office Manager</div>
+    <div class="sig-block">
+      <div>
+        <label class="field-label">OM Signature (typed name)</label>
+        <input type="text" id="omSignature" placeholder="Office Manager types their full name">
+      </div>
+      <div>
+        <label class="field-label">Date</label>
+        <input type="date" id="submitDate">
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--taupe);margin-bottom:4px;">
+      Submitting creates a ClickUp record and emails a summary to leadership.
+      Configure via <strong>Settings</strong> (gear icon, top right).
+    </p>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+      <button class="preview-pdf-btn" id="previewPdfBtn" onclick="downloadPreviewPDF()">&#128196; Download PDF Preview</button>
+      <button class="preview-pdf-btn" id="saveDraftBtn" onclick="saveDraft()" style="background:#f5f0e8;border-color:#c8b89a;color:#5a4a2a;">&#128190; Save Draft</button>
+      <span id="draftSavedNote" style="font-size:12px;color:#888;display:none;"></span>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">Submit for Approval</button>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <img src="../da-review-form/logo-white.png" alt="" onerror="this.style.display='none'">
+  Smile Haus Dental &nbsp;·&nbsp; Hygienist 90-Day Review System &nbsp;·&nbsp; Confidential
+</footer>
+
+<!-- Reset modal -->
+<div class="modal-overlay" id="resetModal" onclick="if(event.target===this)closeResetModal()">
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+    <h3 style="margin:0 0 10px;">Reset Form?</h3>
+    <p style="font-size:14px;color:#877765;margin:0 0 24px;">This will clear all scores, employee info, and notes. Tier skills and labels will <strong>not</strong> be changed.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn-cancel" onclick="closeResetModal()">Cancel</button>
+      <button onclick="resetForm()" style="font-family:var(--font-body);font-size:13px;font-weight:600;background:#c0392b;color:#fff;border:none;border-radius:var(--radius);padding:8px 22px;cursor:pointer;">Yes, Reset Scores</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h3>&#9881; Settings</h3>
+    <p class="modal-hint">Worker URL is pre-configured. Only change if redirected by IT.</p>
+    <div class="modal-section-label">Backend Worker URL</div>
+    <div class="modal-field"><label class="field-label">Worker URL</label><input type="text" id="cfg_worker_url" placeholder="https://sh-da-review-worker.smilehaus.workers.dev/submit"></div>
+    <div style="margin-top:8px;">
+      <button class="btn-cancel" id="cuTestBtn" onclick="testWorker()" style="font-size:12px;padding:5px 12px;">&#128337; Test Connection</button>
+      <div id="cuTestResult" style="font-size:12px;margin-top:6px;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveSettings()">Save</button>
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN modal -->
+<div class="modal-overlay" id="pinModal" onclick="if(event.target===this)closePinModal()">
+  <div class="modal" style="max-width:340px;">
+    <h3>&#9998; Edit Form</h3>
+    <p class="modal-hint">Enter the PIN to unlock editing.</p>
+    <div class="modal-field">
+      <label class="field-label">PIN</label>
+      <input type="password" id="pinInput" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')submitPin()" autocomplete="off">
+      <div class="pin-error" id="pinError">Incorrect PIN. Try again.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="submitPin()">Unlock</button>
+      <button class="btn-cancel" onclick="closePinModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const TIERS_STANDARD = {
+  T1: { floor:45, ceiling:50, next:'T2', label:'Hygienist - Newly Graduated',      rate:'$45+/hr' },
+  T2: { floor:50, ceiling:55, next:'T3', label:'Associate Hygienist - Foundation', rate:'$50+/hr' },
+  T3: { floor:55, ceiling:60, next:'T4', label:'Core Hygienist',                   rate:'$55+/hr' },
+  T4: { floor:60, ceiling:65, next:'T5', label:'Senior Hygienist',                 rate:'$60+/hr' },
+  T5: { floor:65, ceiling:69, next:'T6', label:'Lead Hygienist',                   rate:'$65+/hr' },
+  T6: { floor:69, ceiling:70, next:null,  label:'Master Hygienist',                rate:'$70/hr'  },
+};
+function getActiveTiers() { return TIERS_STANDARD; }
+
+const TIER_SKILLS = {
+  T1: [
+    'Completes prophylaxis appointments within the scheduled appointment time',
+    'Performs complete periodontal charting within the clinical time standard',
+    'Captures full-mouth radiographic series within the allotted clinical time',
+    'Completes and submits clinical chart notes by end of day',
+    'Completes iTero intraoral scans within the allotted time',
+    'Consistently produces intraoral photos with appropriate clarity, minimal artifacts, and complete coverage of all required surfaces',
+  ],
+  T2: [
+    'Meets average daily production goal for past 90 days: $1,200 – $1,272/day',
+    'Achieves Periodontal Treatment ≥ 30%',
+    'Achieves Hygiene Reappointment/Pre-schedule rate ≥ 90%',
+    'Completes comprehensive adult perio assessment with accurate 6-point probing annually (evaluating 5mm+ bleeding for SRP)',
+    'Demonstrates safe, thorough scaling, root planing, and cavitron techniques',
+    'Takes quality intraoral photos/radiographs for all new patients and 1×/yr for recall patients',
+    'Adheres strictly to OSHA, infection control, and practice SOPs without reminders',
+    'Arrives prepared for morning huddle, collaborates positively, and adheres to zero-tolerance gossip policy',
+    'iTero wellness scan completed under 4 minutes',
+    'No chronic SOP deviations',
+    'Demonstrates strong growth potential',
+    'Learning adjunctive protocols: SDF, Fluoride Varnish, Prevident 5000, Electric Toothbrush, Whitening Kits',
+  ],
+  T3: [
+    'Meets average daily production goal for past 90 days: $1,296 – $1,368/day',
+    'Achieves Periodontal Treatment ≥ 30%',
+    'Achieves Hygiene Reappointment/Pre-schedule rate ≥ 90%',
+    'Accurately stages and grades periodontitis; manages perio maintenance patients independently',
+    'Consistently recommends and delivers adjunctive care (Fluoride, PreviDent, SDF) on every eligible visit',
+    'Confidently co-diagnoses restorative needs and sets up seamless doctor handoffs',
+    'Supports back-office and clinical flow (assists DAs, supports doctor flow, helps confirm patients during downtime)',
+  ],
+  T4: [
+    'Meets average daily production goal for past 90 days: $1,392 – $1,464/day',
+    'Achieves Periodontal Treatment ≥ 30%',
+    'Achieves Hygiene Reappointment/Pre-schedule rate ≥ 90%',
+    'No chronic SOP deviations',
+    'Proactively identifies Invisalign candidates and delivers effective patient consultations',
+    'Handles complex perio cases and resistant patients independently',
+    'Assists doctor proficiently in clinical restorative/surgical treatment when needed',
+    'Proficient in orthodontic support protocols (places attachments and assists in Invisalign visits)',
+    'Leads and runs productive, organized morning huddles',
+    'Actively pursues CE, shares clinical knowledge, and participates in clinical onboarding of new team members',
+    'Continually confirms and maintains all Tier 1 and Tier 2 competencies',
+  ],
+  T5: [
+    'Meets average daily production goal for past 90 days: $1,488 – $1,560/day',
+    'Achieves Periodontal Treatment ≥ 30%',
+    'Achieves Hygiene Reappointment/Pre-schedule rate ≥ 90%',
+    'Serves as primary clinical mentor; co-diagnoses every patient',
+    'Proficiently manages advanced orthodontic treatment workflows and clinical coordination',
+    'Co-owns daily huddle facilitation and conducts mid-day/mid-session flow huddles',
+    'Co-runs monthly practice meetings (hygiene section)',
+    'Mentors all hygiene team members',
+  ],
+  T6: [
+    'Meets average daily production goal for past 90 days: $1,680 – $1,800/day',
+    'Achieves Periodontal Treatment ≥ 30%',
+    'Achieves Hygiene Reappointment/Pre-schedule rate ≥ 90%',
+    'Serves as the clinical standard-bearer for hygiene across multiple offices',
+    'Trains and develops Lead and Senior Hygienists',
+    'Independently designs and implements clinical quality improvement programs',
+    'Recognized by providers and administration as a top-tier clinical resource',
+  ],
+};
+
+const KPIS = [
+  { id:'kpi1', name:'Production',           sub:'Gross or Net Production by the provider for the period selected',                                            target:'≥ goal' },
+  { id:'kpi2', name:'Production Per Visit', sub:"Provider's Gross Production ÷ total Patient Visits (Oryx KPI Dashboard)",                                   target:'Avg $210+' },
+  { id:'kpi3', name:'Reappointment %',      sub:'% of Hygiene Visits where patient scheduled next hygiene appt before leaving the office the same day',       target:'≥ 90%' },
+  { id:'kpi4', name:'Perio %',              sub:'% of hygiene patients seen for perio (D4320, D4321, D4341, D4342, D4355, D4381, D4346, D4910, etc.)',        target:'≥ 30%' },
+  { id:'kpi5', name:'Wellness Scans',       sub:'Completed on all new patients and recall patients 1×/year',                                                   target:'4+ scans/day' },
+];
+
+const PERF_CATS = [
+  { id:'p1', name:'Clinical Skills & Procedure Proficiency',
+    desc:'Prophylaxis within scheduled time, probing accuracy, radiograph quality, iTero scans, instrument technique.' },
+  { id:'p2', name:'Infection Control & Safety Compliance',
+    desc:'Consistent adherence to sterilization protocols, OSHA standards, and Smile Haus SOPs without prompting.' },
+  { id:'p3', name:'Patient Communication & Education',
+    desc:'Clear explanation of findings, homecare instructions, treatment acceptance support, empathy with patients.' },
+  { id:'p4', name:'Team Integration & Communication',
+    desc:'Communicates proactively with doctors, DAs, and front desk. Asks appropriate questions, gives clear handoffs.' },
+  { id:'p5', name:'Attitude, Motivation & Professionalism',
+    desc:'Shows up on time, maintains positive energy, dressed appropriately. Willing to do what is needed. No drama.' },
+  { id:'p6', name:'Adaptability & Willingness to Learn',
+    desc:'Receives coaching without defensiveness. Adjusts to new workflows. Applies corrections on the first try.' },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+const scores = {};
+const skillState = {};
+let formLocked = true;
+let _saveRec = null;
+const SAVE_KEY = 'hyg90_form_state';
+const WORKER_KEY = 'hyg90_worker_url';
+const PIN_HASH_KEY = 'hyg90_pin_hash';
+const DEFAULT_WORKER = 'https://sh-da-review-worker.smilehaus.workers.dev/submit';
+const DEFAULT_PIN_HASH = 'b59c67bf196a4758191e42f76670cef4f393a99c57b049c06b8a93d47c69b3c2'; // "smilehaus"
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function renderKPIs() {
+  document.getElementById('kpiBody').innerHTML = KPIS.map(k => `
+    <tr>
+      <td>
+        <div class="kpi-name" contenteditable="true" data-editable id="kpiName_${k.id}">${k.name}</div>
+        ${k.sub ? `<div class="kpi-sub" contenteditable="true" data-editable id="kpiSub_${k.id}">${k.sub}</div>` : ''}
+      </td>
+      <td style="text-align:center;">
+        <input class="kpi-target-input" id="kpiTarget_${k.id}" value="${k.target}" disabled>
+      </td>
+      <td>
+        <div class="score-group">
+          ${[1,2,3,4,5].map(v => `<button class="score-btn" data-id="${k.id}" data-val="${v}" onclick="setScore('${k.id}',${v})">${v}</button>`).join('')}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function renderPerf() {
+  document.getElementById('perfBody').innerHTML = PERF_CATS.map(cat => `
+    <tr>
+      <td>
+        <div class="crit-name" contenteditable="true" data-editable id="critName_${cat.id}">${cat.name}</div>
+        <div class="crit-desc" contenteditable="true" data-editable id="critDesc_${cat.id}">${cat.desc}</div>
+      </td>
+      <td>
+        <div class="score-group">
+          ${[1,2,3,4,5].map(v => `<button class="score-btn" data-id="${cat.id}" data-val="${v}" onclick="setScore('${cat.id}',${v})">${v}</button>`).join('')}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function renderTierAccordion() {
+  const tiers = getActiveTiers();
+  const tierKeys = Object.keys(tiers);
+  document.getElementById('tierAccordion').innerHTML = tierKeys.map(key => {
+    const tier = tiers[key];
+    const skills = TIER_SKILLS[key] || [];
+    return `
+    <div class="tier-row" id="tierRow_${key}">
+      <div class="tier-header" id="tierToggle_${key}">
+        <div class="tier-header-left">
+          <span class="tier-badge" id="tierBadge_${key}">${key}</span>
+          <span class="tier-title" contenteditable="true" data-editable id="tierTitle_${key}">${tier.label}</span>
+          <span class="tier-rate" id="tierRate_${key}">${tier.rate}</span>
+          <span class="tier-gate-status" id="tierGateStatus_${key}"></span>
+        </div>
+        <div class="tier-header-right">
+          <button class="pass-all-btn" id="passAllBtn_${key}" onclick="passAllSkills('${key}')">✓ Pass All</button>
+          <button class="fail-all-btn" id="failAllBtn_${key}" onclick="failAllSkills('${key}')">✗ Not Yet Passed</button>
+          <button class="tier-expand-btn" id="tierChevron_${key}" onclick="toggleTier('${key}')" title="Expand/collapse">›</button>
+        </div>
+      </div>
+      <div class="tier-body" id="tierBody_${key}">
+        ${skills.map((skill, idx) => `
+          <div class="skill-row">
+            <span class="skill-name" contenteditable="true" data-editable id="skillName_${key}_${idx}">${skill}</span>
+            <div class="skill-btns">
+              <button class="skill-btn" id="skill_${key}_${idx}_can" title="Can do" onclick="setSkill('${key}',${idx},'can')">✓</button>
+              <button class="skill-btn" id="skill_${key}_${idx}_cannot" title="Cannot do" onclick="setSkill('${key}',${idx},'cannot')">✗</button>
+            </div>
+            <button class="skill-delete-btn" title="Remove this skill" onclick="deleteSkill(this)">🗑</button>
+          </div>`).join('')}
+        <div class="add-skill-row">
+          <button class="add-skill-btn" onclick="addSkill('${key}')">+ Add skill / job task</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── SCORING ─────────────────────────────────────────────────────────────────
+
+function setScore(id, val) {
+  scores[id] = val === 'na' ? 'na' : parseInt(val);
+  document.querySelectorAll(`[data-id="${id}"]`).forEach(btn => {
+    btn.classList.toggle('active', String(btn.dataset.val) === String(val));
+  });
+  recalc();
+  scheduleSave();
+}
+
+function passAllSkills(tierKey) {
+  const indices = getSkillIndices(tierKey);
+  const allPassed = indices.every(idx => skillState[`${tierKey}_${idx}`] === 'can');
+  indices.forEach(idx => {
+    setSkill(tierKey, idx, allPassed ? null : 'can');
+  });
+}
+
+function failAllSkills(tierKey) {
+  getSkillIndices(tierKey).forEach(idx => setSkill(tierKey, idx, 'cannot'));
+}
+
+function setSkill(tierKey, idx, val) {
+  const key = `${tierKey}_${idx}`;
+  skillState[key] = val;
+  const canBtn    = document.getElementById(`skill_${tierKey}_${idx}_can`);
+  const cannotBtn = document.getElementById(`skill_${tierKey}_${idx}_cannot`);
+  if (canBtn)    canBtn.classList.toggle('active', val === 'can');
+  if (cannotBtn) cannotBtn.classList.toggle('active', val === 'cannot');
+  recalc();
+  scheduleSave();
+}
+
+function addSkill(tierKey) {
+  const body = document.getElementById(`tierBody_${tierKey}`);
+  const addRow = body.querySelector('.add-skill-row');
+  const idx = body.querySelectorAll('.skill-row').length;
+  const row = document.createElement('div');
+  row.className = 'skill-row';
+  row.innerHTML = `
+    <span class="skill-name" contenteditable="true" data-editable id="skillName_${tierKey}_${idx}" style="color:#877765;font-style:italic;">New skill…</span>
+    <div class="skill-btns">
+      <button class="skill-btn" id="skill_${tierKey}_${idx}_can" title="Can do" onclick="setSkill('${tierKey}',${idx},'can')">✓</button>
+      <button class="skill-btn" id="skill_${tierKey}_${idx}_cannot" title="Cannot do" onclick="setSkill('${tierKey}',${idx},'cannot')">✗</button>
+    </div>
+    <button class="skill-delete-btn" title="Remove this skill" onclick="deleteSkill(this)">🗑</button>`;
+  body.insertBefore(row, addRow);
+  row.querySelector('.skill-name').focus();
+}
+
+function deleteSkill(btn) {
+  const row = btn.closest('.skill-row');
+  if (row) row.remove();
+  recalc();
+}
+
+// ─── CALCULATION ─────────────────────────────────────────────────────────────
+
+function getBand(score, maxScore) {
+  if (!maxScore) return { label: '—', cls: '' };
+  const pct = score / maxScore;
+  if (pct < 0.50) return { label: 'Does Not Meet',       cls: 'band-pip' };
+  if (pct < 0.70) return { label: 'Coaching Plan',        cls: 'band-coaching' };
+  if (pct < 0.85) return { label: 'Meets Expectations',   cls: 'band-meets' };
+  if (pct < 0.95) return { label: 'Exceeds Expectations', cls: 'band-exceeds' };
+  return            { label: 'Outstanding',               cls: 'band-outstanding' };
+}
+
+function getSkillIndices(tierKey) {
+  const body = document.getElementById(`tierBody_${tierKey}`);
+  if (!body) return (TIER_SKILLS[tierKey] || []).map((_, i) => i);
+  const indices = [];
+  body.querySelectorAll(`[id^="skill_${tierKey}_"][id$="_can"]`).forEach(btn => {
+    const m = btn.id.match(new RegExp(`skill_${tierKey}_(\\d+)_can`));
+    if (m) indices.push(parseInt(m[1]));
+  });
+  return indices.length ? indices : (TIER_SKILLS[tierKey] || []).map((_, i) => i);
+}
+
+function getTierGateStatus(tierKey) {
+  const indices = getSkillIndices(tierKey);
+  let allPass = true, anyFail = false;
+  indices.forEach(idx => {
+    const state = skillState[`${tierKey}_${idx}`];
+    if (state === 'can') { /* good */ }
+    else if (state === 'cannot') { anyFail = true; allPass = false; }
+    else { allPass = false; }
+  });
+  if (allPass && indices.length > 0) return 'pass';
+  if (anyFail) return 'fail';
+  return 'incomplete';
+}
+
+function recalc() {
+  // Part I — KPIs (5 × 5 = 25 pts)
+  let p1 = 0, p1Max = 0;
+  KPIS.forEach(k => {
+    p1Max += 5;
+    if (scores[k.id]) p1 += scores[k.id];
+  });
+
+  // Part II — 6 categories × 5 = 30 pts
+  let p2 = 0;
+  PERF_CATS.forEach(cat => { p2 += scores[cat.id] || 0; });
+
+  document.getElementById('kpiSubtotal').textContent = p1;
+  document.getElementById('kpiDenom').textContent = p1Max;
+  document.getElementById('p1Header').textContent = `/ ${p1Max} pts`;
+  document.getElementById('p2Subtotal').textContent = p2;
+
+  const total    = p1 + p2;
+  const totalMax = p1Max + 30;
+  document.getElementById('sumP1').textContent      = p1;
+  document.getElementById('sumP1Max').textContent   = p1Max;
+  document.getElementById('sumP2').textContent      = p2;
+  document.getElementById('sumTotal').textContent   = total;
+  document.getElementById('sumTotalMax').textContent = totalMax;
+
+  const bandNameEl  = document.getElementById('bandName');
+  const bandScoreEl = document.getElementById('bandScore');
+  if (total > 0) {
+    const band = getBand(total, totalMax);
+    bandNameEl.className  = 'band-name ' + band.cls;
+    bandNameEl.style.opacity = '';
+    bandNameEl.textContent = band.label;
+    bandScoreEl.className  = 'band-score ' + band.cls;
+    bandScoreEl.textContent = total;
+  } else {
+    bandNameEl.className  = 'band-name';
+    bandNameEl.style.opacity = '0.35';
+    bandNameEl.textContent = 'Fill in scores above';
+    bandScoreEl.className  = 'band-score';
+    bandScoreEl.textContent = '—';
+  }
+
+  // Gate logic
+  const tierKey = document.getElementById('currentTier').value;
+  const tiers   = getActiveTiers();
+  const tier    = tiers[tierKey];
+  const tierKeys = Object.keys(tiers);
+
+  tierKeys.forEach(k => {
+    const toggle   = document.getElementById(`tierToggle_${k}`);
+    const badge    = document.getElementById(`tierBadge_${k}`);
+    const statusEl = document.getElementById(`tierGateStatus_${k}`);
+    if (!toggle) return;
+    toggle.className = 'tier-header' + (k === tierKey ? ' current-tier' : tier && tier.next === k ? ' next-tier' : '');
+    badge.className  = 'tier-badge'  + (k === tierKey ? ' current'      : tier && tier.next === k ? ' next'      : '');
+    const gs = getTierGateStatus(k);
+    statusEl.className = 'tier-gate-status ' + (gs === 'pass' ? 'gate-pass' : gs === 'fail' ? 'gate-fail' : '');
+    statusEl.textContent = gs === 'pass' ? '✓ Pass' : gs === 'fail' ? '✗ Not Yet Passed' : '';
+    const passBtn = document.getElementById(`passAllBtn_${k}`);
+    if (passBtn) passBtn.classList.toggle('all-passed', gs === 'pass');
+  });
+
+  let gateA = false, gateBResult = false, highestPromoTier = null;
+  if (tier) {
+    const currentIdx = tierKeys.indexOf(tierKey);
+    const tiersForA  = tierKeys.slice(0, currentIdx + 1);
+    gateA = tiersForA.every(k => getTierGateStatus(k) === 'pass');
+
+    let promoIdx = currentIdx + 1;
+    while (promoIdx < tierKeys.length) {
+      if (getTierGateStatus(tierKeys[promoIdx]) === 'pass') { highestPromoTier = tierKeys[promoIdx]; promoIdx++; }
+      else break;
+    }
+    gateBResult = highestPromoTier !== null;
+  }
+
+  const gateABox    = document.getElementById('gateABox');
+  const gateBBox    = document.getElementById('gateBBox');
+  const gateAStatus = document.getElementById('gateAStatus');
+  const gateBStatus = document.getElementById('gateBStatus');
+  const gateASub    = document.getElementById('gateASub');
+  const gateBSub    = document.getElementById('gateBSub');
+
+  if (!tier) {
+    gateABox.className = 'gate-box incomplete'; gateAStatus.textContent = 'Select tier above';
+    gateBBox.className = 'gate-box incomplete'; gateBStatus.textContent = 'Select tier above';
+    gateASub.textContent = 'Required for advancement';
+    gateBSub.textContent = 'Required for promotion';
+  } else {
+    gateABox.className = 'gate-box ' + (gateA ? 'pass' : 'fail');
+    gateAStatus.textContent = gateA ? '✓ Passed' : '✗ Not Yet Passed';
+    gateASub.textContent = gateA ? 'Current tier mastery confirmed' : `Complete all ${tierKey} (and below) skills`;
+
+    if (tier.next) {
+      gateBBox.className = 'gate-box ' + (gateBResult ? 'pass' : 'fail');
+      gateBStatus.textContent = gateBResult ? '✓ Passed' : '✗ Not Yet Passed';
+      gateBSub.textContent = gateBResult
+        ? `Promotion to ${highestPromoTier} eligible`
+        : `Complete all ${tier.next} skills to promote`;
+    } else {
+      gateBBox.className = 'gate-box incomplete';
+      gateBStatus.textContent = 'Highest tier';
+      gateBSub.textContent = 'No further tier advancement';
+    }
+  }
+}
+
+// ─── RECOMMENDATION ──────────────────────────────────────────────────────────
+
+function selectRec(el, val) {
+  document.querySelectorAll('.rec-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  scheduleSave();
+}
+
+// ─── TIER MANAGEMENT ─────────────────────────────────────────────────────────
+
+function buildTierSelect() {
+  const sel = document.getElementById('currentTier');
+  const cur = sel.value;
+  const tiers = getActiveTiers();
+  sel.innerHTML = '<option value="">— Select tier —</option>' +
+    Object.entries(tiers).map(([k, t]) => `<option value="${k}"${k===cur?' selected':''}>${k} — ${t.label} (${t.rate})</option>`).join('');
+}
+
+function onTierChange() {
+  recalc();
+  scheduleSave();
+}
+
+function onRateChange() {
+  const rate = parseFloat(document.getElementById('currentRate').value);
+  if (!rate) { document.getElementById('tierAutoLabel').textContent = ''; return; }
+  const tiers = getActiveTiers();
+  let matchKey = null;
+  for (const [k, t] of Object.entries(tiers)) {
+    if (rate >= t.floor && rate <= t.ceiling) { matchKey = k; break; }
+  }
+  if (!matchKey) {
+    document.getElementById('tierAutoLabel').textContent = '';
+    return;
+  }
+  const sel = document.getElementById('currentTier');
+  if (!sel.value) {
+    sel.value = matchKey;
+    document.getElementById('tierAutoLabel').textContent = `(auto-detected: ${matchKey})`;
+    recalc();
+  } else {
+    document.getElementById('tierAutoLabel').textContent = '';
+  }
+}
+
+function toggleTier(key) {
+  const body    = document.getElementById(`tierBody_${key}`);
+  const chevron = document.getElementById(`tierChevron_${key}`);
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+// ─── FORM STATE ──────────────────────────────────────────────────────────────
+
+function scheduleSave() {
+  clearTimeout(_saveRec);
+  _saveRec = setTimeout(saveFormState, 400);
+}
+
+function saveFormState() {
+  try {
+    const state = {};
+    // Simple input/select/textarea fields
+    ['hygName','homeOffice','currentRate','currentTier','hireDate','reviewDate',
+     'reviewerName','reviewPeriod','kpiNotes','perfNotes','strengths','growthAreas',
+     'goals','employeeComments','overallComments','employeeSig','employeeSigDate',
+     'omSignature','submitDate'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) state[id] = el.value;
+    });
+    // Contenteditable fields (non-skill-name)
+    document.querySelectorAll('[data-editable][id]').forEach(el => {
+      if (el.classList.contains('skill-name')) return;
+      state[el.id] = el.textContent;
+    });
+    // Scores
+    state._scores = { ...scores };
+    // Skill states
+    state._skillState = { ...skillState };
+    // Recommendation
+    const selRec = document.querySelector('.rec-option.selected input[type=radio]');
+    state._recommendation = selRec ? selRec.value : '';
+    // Advancement checkbox
+    state._advancement = document.getElementById('advancementCheck').checked;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+function restoreFormState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    ['hygName','homeOffice','currentRate','currentTier','hireDate','reviewDate',
+     'reviewerName','reviewPeriod','kpiNotes','perfNotes','strengths','growthAreas',
+     'goals','employeeComments','overallComments','employeeSig','employeeSigDate',
+     'omSignature','submitDate'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && state[id] !== undefined) el.value = state[id];
+    });
+    document.querySelectorAll('[data-editable][id]').forEach(el => {
+      if (el.classList.contains('skill-name')) return;
+      if (state[el.id] !== undefined) el.textContent = state[el.id];
+    });
+    if (state._scores) {
+      Object.assign(scores, state._scores);
+      Object.keys(scores).forEach(id => {
+        const v = scores[id];
+        document.querySelectorAll(`[data-id="${id}"]`).forEach(btn => {
+          btn.classList.toggle('active', String(btn.dataset.val) === String(v));
+        });
+      });
+    }
+    if (state._skillState) {
+      Object.assign(skillState, state._skillState);
+      Object.keys(skillState).forEach(k => {
+        const [tier, ...rest] = k.split('_');
+        const idx = rest.join('_');
+        const v = skillState[k];
+        const canBtn    = document.getElementById(`skill_${tier}_${idx}_can`);
+        const cannotBtn = document.getElementById(`skill_${tier}_${idx}_cannot`);
+        if (canBtn)    canBtn.classList.toggle('active', v === 'can');
+        if (cannotBtn) cannotBtn.classList.toggle('active', v === 'cannot');
+      });
+    }
+    if (state._recommendation) {
+      document.querySelectorAll('.rec-option').forEach(opt => {
+        const radio = opt.querySelector('input[type=radio]');
+        opt.classList.toggle('selected', radio && radio.value === state._recommendation);
+      });
+    }
+    if (state._advancement !== undefined) {
+      document.getElementById('advancementCheck').checked = state._advancement;
+    }
+  } catch(e) {}
+}
+
+// ─── LOCK / UNLOCK ───────────────────────────────────────────────────────────
+
+function lockForm() {
+  formLocked = true;
+  document.body.classList.add('form-locked');
+  const btn = document.getElementById('editLockBtn');
+  btn.textContent = '🔒 Edit';
+  btn.classList.add('locked');
+  btn.onclick = openPinModal;
+}
+
+function unlockForm() {
+  formLocked = false;
+  document.body.classList.remove('form-locked');
+  const btn = document.getElementById('editLockBtn');
+  btn.textContent = '🔓 Editing';
+  btn.classList.remove('locked');
+  btn.onclick = lockForm;
+}
+
+async function sha256hex(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function openPinModal() {
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  document.getElementById('pinModal').classList.add('open');
+  setTimeout(() => document.getElementById('pinInput').focus(), 80);
+}
+
+function closePinModal() {
+  document.getElementById('pinModal').classList.remove('open');
+}
+
+async function submitPin() {
+  const pin = document.getElementById('pinInput').value.trim();
+  if (!pin) return;
+  const hash = await sha256hex(pin);
+  const stored = localStorage.getItem(PIN_HASH_KEY) || DEFAULT_PIN_HASH;
+  if (hash === stored) {
+    closePinModal();
+    unlockForm();
+  } else {
+    document.getElementById('pinError').style.display = 'block';
+    document.getElementById('pinInput').select();
+  }
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+
+function openSettings() {
+  document.getElementById('cfg_worker_url').value = localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER;
+  document.getElementById('cuTestResult').textContent = '';
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+function saveSettings() {
+  localStorage.setItem(WORKER_KEY, document.getElementById('cfg_worker_url').value.trim());
+  closeSettings();
+  showToast('Settings saved');
+}
+
+async function testWorker() {
+  const url = document.getElementById('cfg_worker_url').value.trim();
+  const res = document.getElementById('cuTestResult');
+  res.textContent = 'Testing…';
+  try {
+    const r = await fetch(url.replace('/submit', '/health'), { signal: AbortSignal.timeout(5000) });
+    res.textContent = r.ok ? '✓ Connected' : `✗ HTTP ${r.status}`;
+    res.style.color = r.ok ? '#2d6a3f' : '#c0392b';
+  } catch(e) {
+    res.textContent = '✗ Could not connect';
+    res.style.color = '#c0392b';
+  }
+}
+
+// ─── RESET ───────────────────────────────────────────────────────────────────
+
+function openResetModal() {
+  document.getElementById('resetModal').classList.add('open');
+}
+
+function closeResetModal() {
+  document.getElementById('resetModal').classList.remove('open');
+}
+
+function resetForm() {
+  closeResetModal();
+  // Clear scores
+  Object.keys(scores).forEach(k => delete scores[k]);
+  document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
+  // Clear skills
+  Object.keys(skillState).forEach(k => delete skillState[k]);
+  document.querySelectorAll('.skill-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pass-all-btn').forEach(b => b.classList.remove('all-passed'));
+  // Clear recommendation
+  document.querySelectorAll('.rec-option').forEach(o => o.classList.remove('selected'));
+  // Clear text fields
+  ['hygName','currentRate','hireDate','reviewDate','reviewerName','reviewPeriod',
+   'kpiNotes','perfNotes','strengths','growthAreas','goals','employeeComments',
+   'overallComments','employeeSig','employeeSigDate','omSignature','submitDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('homeOffice').value = '';
+  document.getElementById('currentTier').value = '';
+  document.getElementById('advancementCheck').checked = false;
+  document.getElementById('tierAutoLabel').textContent = '';
+  localStorage.removeItem(SAVE_KEY);
+  recalc();
+  showToast('Form reset');
+}
+
+// ─── PDF ─────────────────────────────────────────────────────────────────────
+
+async function downloadPreviewPDF() {
+  const btn = document.getElementById('previewPdfBtn');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+  try {
+    const { jsPDF } = window.jspdf;
+    const canvas = await html2canvas(document.body, { scale: 1.5, useCORS: true, logging: false });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const w = pdf.internal.pageSize.getWidth();
+    const h = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.width / w;
+    const imgH = canvas.height / ratio;
+    let y = 0;
+    while (y < canvas.height) {
+      if (y > 0) pdf.addPage();
+      const slice = document.createElement('canvas');
+      slice.width  = canvas.width;
+      slice.height = Math.min(h * ratio, canvas.height - y);
+      slice.getContext('2d').drawImage(canvas, 0, -y);
+      pdf.addImage(slice.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, w, Math.min(h, imgH - y / ratio));
+      y += h * ratio;
+    }
+    const name = document.getElementById('hygName').value.trim().replace(/\s+/g,'_') || 'Hygienist';
+    pdf.save(`Hyg_90Day_Review_${name}.pdf`);
+  } catch(e) {
+    showToast('PDF generation failed');
+  } finally {
+    btn.textContent = '📄 Download PDF Preview';
+    btn.disabled = false;
+  }
+}
+
+// ─── DRAFT / SUBMIT ──────────────────────────────────────────────────────────
+
+async function saveDraft() {
+  const btn = document.getElementById('saveDraftBtn');
+  btn.textContent = '⏳ Saving…';
+  btn.disabled = true;
+  const workerUrl = localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER;
+  const payload = collectPayload();
+  payload.form_type = 'hyg90day';
+  payload.is_draft  = true;
+  try {
+    const r = await fetch(workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (r.ok) {
+      const note = document.getElementById('draftSavedNote');
+      note.style.display = 'inline';
+      note.textContent = 'Draft saved at ' + new Date().toLocaleTimeString();
+      showToast('Draft saved');
+    } else {
+      showToast('Save failed — check worker URL in Settings');
+    }
+  } catch(e) {
+    showToast('Save failed — offline or worker unreachable');
+  } finally {
+    btn.textContent = '💾 Save Draft';
+    btn.disabled = false;
+  }
+}
+
+async function handleSubmit() {
+  const hygName = document.getElementById('hygName').value.trim();
+  if (!hygName) { showToast('Enter hygienist name before submitting'); return; }
+  const selRec = document.querySelector('.rec-option.selected input[type=radio]');
+  if (!selRec) { showToast('Select a recommendation before submitting'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+  const workerUrl = localStorage.getItem(WORKER_KEY) || DEFAULT_WORKER;
+  const payload = collectPayload();
+  payload.form_type = 'hyg90day';
+  payload.is_draft  = false;
+  try {
+    const r = await fetch(workerUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (r.ok) {
+      showToast('Submitted successfully ✓');
+      localStorage.removeItem(SAVE_KEY);
+    } else {
+      showToast(`Submission failed (HTTP ${r.status}) — configure Worker URL in Settings`);
+    }
+  } catch(e) {
+    showToast('Submission failed — offline or worker unreachable');
+  } finally {
+    btn.textContent = 'Submit for Approval';
+    btn.disabled = false;
+  }
+}
+
+function collectPayload() {
+  const tiers = getActiveTiers();
+  const tierKey = document.getElementById('currentTier').value;
+  let p1 = 0;
+  KPIS.forEach(k => { if (scores[k.id]) p1 += scores[k.id]; });
+  let p2 = 0;
+  PERF_CATS.forEach(c => { p2 += scores[c.id] || 0; });
+  const selRec = document.querySelector('.rec-option.selected input[type=radio]');
+  return {
+    hyg_name:          document.getElementById('hygName').value.trim(),
+    home_office:       document.getElementById('homeOffice').value,
+    current_rate:      document.getElementById('currentRate').value,
+    current_tier:      tierKey,
+    hire_date:         document.getElementById('hireDate').value,
+    review_date:       document.getElementById('reviewDate').value,
+    reviewer_name:     document.getElementById('reviewerName').value.trim(),
+    review_period:     document.getElementById('reviewPeriod').value.trim(),
+    kpi_scores:        Object.fromEntries(KPIS.map(k => [k.id, scores[k.id] || 0])),
+    perf_scores:       Object.fromEntries(PERF_CATS.map(c => [c.id, scores[c.id] || 0])),
+    kpi_total:         p1,
+    perf_total:        p2,
+    combined_total:    p1 + p2,
+    kpi_notes:         document.getElementById('kpiNotes').value.trim(),
+    perf_notes:        document.getElementById('perfNotes').value.trim(),
+    strengths:         document.getElementById('strengths').value.trim(),
+    growth_areas:      document.getElementById('growthAreas').value.trim(),
+    goals:             document.getElementById('goals').value.trim(),
+    employee_comments: document.getElementById('employeeComments').value.trim(),
+    skill_state:       { ...skillState },
+    recommendation:    selRec ? selRec.value : '',
+    advancement:       document.getElementById('advancementCheck').checked,
+    overall_comments:  document.getElementById('overallComments').value.trim(),
+    employee_sig:      document.getElementById('employeeSig').value.trim(),
+    employee_sig_date: document.getElementById('employeeSigDate').value,
+    om_signature:      document.getElementById('omSignature').value.trim(),
+    submit_date:       document.getElementById('submitDate').value,
+  };
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+
+let _toastTimer;
+function showToast(msg) {
+  clearTimeout(_toastTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+(function init() {
+  buildTierSelect();
+  renderKPIs();
+  renderPerf();
+  renderTierAccordion();
+  restoreFormState();
+  recalc();
+
+  // Auto-save on any input change
+  document.addEventListener('input', e => {
+    if (e.target.closest('.modal-overlay')) return;
+    scheduleSave();
+  });
+  document.addEventListener('change', e => {
+    if (e.target.closest('.modal-overlay')) return;
+    if (e.target.id === 'currentTier') onTierChange();
+    scheduleSave();
+  });
+
+  // Default today for review date
+  if (!document.getElementById('reviewDate').value) {
+    document.getElementById('reviewDate').value = new Date().toISOString().split('T')[0];
+  }
+})();
+</script>
+</body>
+</html>
